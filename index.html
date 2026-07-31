@@ -1,0 +1,1341 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بلاك وولف — نظام الغرف المتعددة</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+--void: #03050c;
+--deep: #060a14;
+--panel: rgba(10,17,30,0.88);
+--frame: #223247;
+--frame-light: #34506e;
+--hud: #ff4b5c;
+--hud-bright: #ff8f9c;
+--hud-dim: #7a2530;
+--amber: #e6c98a;
+--amber-dim: #7a6a42;
+--text-main: #dfeaf5;
+--text-dim: #5c7286;
+--text-faint: #35455a;
+--ok: #5be38a;
+--cyan: #00e5ff;
+--cyan-bright: #7df9ff;
+--fire: #ff2d3a;
+--fire-bright: #ff6b57;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; width: 100%; overflow-x: hidden; }
+body {
+font-family: 'Tajawal', 'JetBrains Mono', sans-serif;
+background: radial-gradient(ellipse at 30% 20%, rgba(120,30,40,0.22), transparent 55%), radial-gradient(ellipse at 80% 85%, rgba(60,20,30,0.18), transparent 50%), var(--void);
+min-height: 100vh;
+color: var(--text-main);
+position: relative;
+padding: 20px 16px 60px;
+}
+.stars, .stars2 { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.stars { width: 1px; height: 1px; box-shadow: 1309px 228px #fff, 51px 563px #fff, 501px 457px #fff, 285px 209px #fff, 1385px 1116px #fff, 178px 864px #fff, 65px 61px #fff, 191px 447px #fff, 476px 1034px #fff, 1232px 54px #fff, 1149px 407px #fff, 1466px 1116px #fff, 859px 451px #fff, 919px 569px #fff, 13px 326px #fff, 1429px 865px #fff, 696px 569px #fff, 318px 440px #fff, 1563px 689px #fff, 209px 189px #fff, 778px 198px #fff, 735px 704px #fff, 1236px 541px #fff, 88px 940px #fff, 1098px 255px #fff, 775px 161px #fff, 1130px 600px #fff, 1287px 740px #fff, 1182px 393px #fff, 1442px 142px #fff, 93px 466px #fff, 1583px 592px #fff, 163px 476px #fff, 206px 778px #fff, 569px 928px #fff, 1301px 747px #fff, 333px 758px #fff, 727px 429px #fff, 1372px 546px #fff, 1437px 146px #fff, 1247px 350px #fff, 1093px 501px #fff, 334px 946px #fff, 777px 552px #fff, 1310px 1140px #fff, 449px 664px #fff, 1573px 114px #fff, 469px 65px #fff, 646px 821px #fff, 548px 135px #fff, 432px 1161px #fff, 1470px 644px #fff, 435px 1022px #fff, 810px 939px #fff, 292px 542px #fff, 285px 505px #fff, 1525px 1149px #fff, 1103px 538px #fff, 1529px 1197px #fff, 877px 1195px #fff, 817px 741px #fff, 449px 283px #fff, 1043px 1010px #fff, 186px 96px #fff, 224px 313px #fff, 1285px 327px #fff, 1393px 864px #fff, 1221px 130px #fff, 788px 781px #fff, 1220px 958px #fff; opacity: 0.55; animation: twinkle 6s ease-in-out infinite alternate; }
+.stars2 { width: 2px; height: 2px; box-shadow: 663px 308px #ffc9cf, 808px 98px #ffc9cf, 148px 1097px #ffc9cf, 192px 748px #ffc9cf, 1193px 118px #ffc9cf, 1039px 439px #ffc9cf, 76px 176px #ffc9cf, 888px 856px #ffc9cf, 143px 492px #ffc9cf, 185px 1128px #ffc9cf, 869px 121px #ffc9cf, 1158px 253px #ffc9cf, 457px 1193px #ffc9cf, 126px 1181px #ffc9cf, 1199px 812px #ffc9cf, 101px 452px #ffc9cf, 95px 1140px #ffc9cf, 272px 593px #ffc9cf, 858px 295px #ffc9cf, 1107px 241px #ffc9cf, 1169px 631px #ffc9cf, 1147px 370px #ffc9cf, 211px 1191px #ffc9cf, 1169px 384px #ffc9cf, 762px 199px #ffc9cf; opacity: 0.8; }
+@keyframes twinkle { 0%,100% { opacity: 0.35; } 50% { opacity: 0.75; } }
+
+/* Header */
+.header {
+position: relative;
+z-index: 10;
+width: 100%;
+background: linear-gradient(180deg, rgba(18,28,44,0.95), rgba(6,10,20,0.98));
+border-bottom: 2px solid var(--fire);
+padding: 12px 24px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+box-shadow: 0 4px 20px rgba(255,45,58,0.3);
+}
+.hud-topbar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: 1px; color: var(--cyan); text-transform: uppercase; font-weight: 700; }
+.hud-topbar .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); margin-left: 8px; animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.logo-wrap { display: flex; align-items: center; gap: 16px; }
+.logo-circle { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px rgba(255,45,58,0.5), 0 0 20px rgba(255,45,58,0.4); background: #0a0000; }
+.logo-img { width: 100%; height: 100%; object-fit: cover; }
+.brand-block { display: flex; flex-direction: column; align-items: center; }
+.header-title {
+font-family: 'Orbitron', sans-serif;
+font-size: 32px;
+font-weight: 900;
+letter-spacing: 6px;
+text-transform: uppercase;
+color: var(--fire);
+text-shadow: 0 0 10px rgba(255,45,58,0.8), 0 0 20px rgba(255,45,58,0.6), 0 0 30px rgba(255,45,58,0.4);
+direction: ltr;
+animation: fireGlow 2s ease-in-out infinite alternate;
+}
+@keyframes fireGlow {
+0% { text-shadow: 0 0 10px rgba(255,45,58,0.8), 0 0 20px rgba(255,45,58,0.6), 0 0 30px rgba(255,45,58,0.4); }
+100% { text-shadow: 0 0 15px rgba(255,45,58,1), 0 0 30px rgba(255,45,58,0.8), 0 0 45px rgba(255,45,58,0.6), 0 0 60px rgba(255,26,26,0.5); }
+}
+.header-sub { margin-top: 4px; font-size: 13px; letter-spacing: 2px; color: var(--cyan); font-weight: 700; }
+
+/* Tabs - مهم جدًا */
+.tab-bar {
+position: relative;
+z-index: 100;
+display: flex;
+width: 100%;
+background: linear-gradient(180deg, rgba(10,15,25,0.95), rgba(6,10,20,0.98));
+border-bottom: 2px solid var(--fire);
+overflow-x: auto;
+}
+.tab-btn {
+flex: 1;
+min-width: 150px;
+background: transparent;
+border: none;
+border-bottom: 3px solid transparent;
+padding: 16px 20px;
+color: var(--text-dim);
+font-family: 'Tajawal', sans-serif;
+font-size: 15px;
+font-weight: 800;
+cursor: pointer;
+transition: all 0.3s ease;
+text-align: center;
+white-space: nowrap;
+position: relative;
+z-index: 101;
+pointer-events: auto !important;
+}
+.tab-btn:hover { background: rgba(255,45,58,0.1); color: var(--text-main); }
+.tab-btn.active {
+background: linear-gradient(180deg, rgba(255,45,58,0.2), rgba(255,45,58,0.05));
+color: var(--fire-bright);
+border-bottom: 3px solid var(--fire);
+text-shadow: 0 0 10px rgba(255,45,58,0.5);
+}
+
+.main-content { position: relative; z-index: 1; width: 100%; padding: 20px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.live-feed { border: 1px solid var(--frame); border-radius: 10px; padding: 20px; margin-bottom: 20px; background: rgba(10,17,30,0.7); backdrop-filter: blur(10px); }
+.live-feed-title { font-size: 14px; letter-spacing: 1px; color: var(--cyan); font-weight: 800; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px dashed var(--cyan); }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 800; letter-spacing: 0.5px; color: var(--cyan); margin-bottom: 8px; }
+.form-group label::before { content: '// '; color: var(--cyan-bright); direction: ltr; }
+.form-group label .field-index { color: var(--text-faint); font-weight: 600; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; direction: ltr; }
+.input-control { width: 100%; background: rgba(4,8,16,0.8); border: 1px solid var(--frame); border-radius: 6px; padding: 12px; color: var(--cyan); font-family: 'Tajawal', 'JetBrains Mono', sans-serif; font-size: 15px; font-weight: 700; transition: border-color 0.25s ease, box-shadow 0.25s ease; outline: none; }
+.input-control::placeholder { color: var(--text-faint); }
+.input-control:focus { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan), 0 0 16px rgba(0,229,255,0.25); }
+.input-control.ltr-field { direction: ltr; text-align: right; font-family: 'JetBrains Mono', monospace; }
+select.input-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 12px center; background-size: 14px; padding-left: 32px; }
+select.input-control option { background: var(--deep); color: var(--text-main); }
+.btn-submit { width: 100%; background: linear-gradient(180deg, rgba(255,45,58,0.15), rgba(255,45,58,0.05)); border: 1px solid var(--fire); border-radius: 6px; padding: 15px; color: var(--fire-bright); font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 1.5px; cursor: pointer; transition: all 0.3s ease; margin-top: 10px; }
+.btn-submit:hover { background: var(--fire); color: #03101c; box-shadow: 0 0 26px rgba(255,45,58,0.5); }
+.btn-secondary { width: 100%; background: transparent; border: 1px solid var(--frame-light); border-radius: 6px; padding: 11px; color: var(--text-main); font-family: 'Tajawal', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; margin-top: 4px; }
+.btn-secondary:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan-bright); box-shadow: 0 0 14px rgba(0,229,255,0.2); }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary.active { border-color: var(--ok); color: var(--ok); }
+.feed-status { font-size: 12px; letter-spacing: 0.2px; color: var(--text-dim); margin-top: 10px; margin-bottom: 8px; min-height: 12px; text-align: center; font-weight: 600; }
+.feed-status.error { color: var(--hud-bright); }
+.feed-status.ok { color: var(--ok); }
+.room-note { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 8px; line-height: 1.6; font-weight: 600; }
+.results-subtitle { font-size: 13px; letter-spacing: 1px; color: var(--cyan-bright); font-weight: 800; margin-top: 18px; padding-top: 16px; border-top: 1px dashed rgba(0,229,255,0.3); margin-bottom: 14px; }
+.session-tag { display: inline-block; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 800; margin-inline-end: 6px; margin-bottom: 6px; border: 1px solid var(--frame-light); color: var(--text-dim); }
+.session-tag.active { border-color: var(--ok); color: var(--ok); background: rgba(91,227,138,0.15); }
+.session-tag.overlap { border-color: var(--fire); color: var(--fire-bright); background: rgba(255,45,58,0.15); }
+.results-panel { margin-top: 20px; padding: 18px; border: 1px solid var(--frame); border-radius: 8px; background: rgba(10,17,30,0.7); backdrop-filter: blur(10px); }
+.results-panel.visible { display: block; }
+.results-title { font-size: 13px; letter-spacing: 1px; color: var(--cyan); font-weight: 800; margin-bottom: 14px; }
+.result-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid rgba(0,229,255,0.15); gap: 12px; }
+.result-row:last-child { border-bottom: none; }
+.result-label { font-size: 13px; letter-spacing: 0.3px; color: var(--cyan); font-weight: 700; }
+.result-value { font-size: 17px; font-weight: 900; color: var(--cyan-bright); text-shadow: 0 0 10px rgba(0,229,255,0.55); font-family: 'JetBrains Mono', monospace; direction: ltr; white-space: nowrap; }
+.trade-badge { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-radius: 8px; margin-bottom: 16px; font-family: 'Tajawal', sans-serif; font-weight: 900; font-size: 16px; letter-spacing: 0.5px; direction: rtl; text-align: right; }
+.trade-badge .tb-note { font-size: 11px; font-weight: 700; opacity: 0.9; font-family: 'JetBrains Mono', monospace; direction: ltr; }
+.trade-badge.buy { background: rgba(91,227,138,0.15); border: 1px solid var(--ok); color: var(--ok); }
+.trade-badge.sell { background: linear-gradient(135deg, rgba(255,45,58,0.25), rgba(255,107,87,0.1)); border: 1px solid var(--fire); color: var(--fire-bright); text-shadow: 0 0 10px rgba(255,45,58,0.7); box-shadow: 0 0 16px rgba(255,45,58,0.35); animation: firePulse 2.4s ease-in-out infinite; }
+@keyframes firePulse { 0%, 100% { box-shadow: 0 0 16px rgba(255,45,58,0.35); } 50% { box-shadow: 0 0 26px rgba(255,45,58,0.6); } }
+.fib-table-wrap { overflow-x: auto; margin-top: 4px; }
+.fib-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px; min-width: 300px; }
+.fib-table th { color: var(--cyan-bright); font-weight: 800; font-size: 12px; letter-spacing: 0.5px; padding: 8px 4px; border-bottom: 1px solid rgba(0,229,255,0.3); text-align: center; }
+.fib-table td { padding: 8px 4px; text-align: center; color: var(--cyan); font-weight: 700; border-bottom: 1px solid rgba(0,229,255,0.1); }
+.fib-table tr.golden td { color: var(--cyan-bright); font-weight: 900; }
+.fib-table tr.golden { background: rgba(0,229,255,0.08); }
+.chart-wrap { margin-top: 6px; }
+#gannChart { width: 100%; height: 250px; display: block; background: rgba(4,8,16,0.5); border: 1px solid var(--frame); border-radius: 8px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; font-size: 11px; color: var(--text-dim); font-weight: 600; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.action-buttons { display: flex; gap: 8px; margin-top: 14px; }
+.btn-mini { flex: 1; background: transparent; border: 1px solid var(--frame-light); border-radius: 6px; padding: 10px; color: var(--text-main); font-family: 'Tajawal', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; }
+.btn-mini:hover { border-color: var(--cyan); color: var(--cyan-bright); }
+.btn-mini.copied { border-color: var(--ok); color: var(--ok); }
+.watch-block { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(0,229,255,0.15); }
+.confirm-note { margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center; border: 1px dashed var(--frame-light); color: var(--text-dim); }
+.confirm-note.found { border: 1px solid var(--amber); color: var(--amber); background: rgba(230,201,138,0.08); }
+.rsi-note { margin-top: 10px; padding: 10px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center; border: 1px dashed var(--frame-light); color: var(--text-dim); }
+.rsi-note.bull { border: 1px solid var(--ok); color: var(--ok); background: rgba(91,227,138,0.08); }
+.rsi-note.bear { border: 1px solid var(--fire); color: var(--fire-bright); background: rgba(255,45,58,0.08); }
+.flow-tag { display: inline-block; padding: 4px 12px; border-radius: 5px; font-size: 12px; font-weight: 800; margin-inline-end: 6px; }
+.flow-tag.bos { background: rgba(91,227,138,0.2); color: var(--ok); border: 1px solid var(--ok); }
+.flow-tag.choch { background: rgba(255,45,58,0.2); color: var(--fire-bright); border: 1px solid var(--fire); }
+.history-panel { margin-top: 20px; padding: 18px; border: 1px solid var(--frame); border-radius: 8px; background: rgba(10,17,30,0.7); backdrop-filter: blur(10px); }
+.history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.history-clear { background: none; border: none; color: var(--text-faint); font-size: 12px; font-family: 'Tajawal', sans-serif; cursor: pointer; text-decoration: underline; font-weight: 700; }
+.history-clear:hover { color: var(--fire-bright); }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 2px; border-bottom: 1px dashed rgba(0,229,255,0.15); font-size: 12px; cursor: pointer; gap: 8px; }
+.history-item:last-child { border-bottom: none; }
+.history-item:hover { color: var(--cyan-bright); }
+.history-item .h-main { color: var(--cyan-bright); font-weight: 800; text-shadow: 0 0 6px rgba(0,229,255,0.4); }
+.history-item .h-sub { color: var(--cyan); opacity: 0.8; font-family: 'JetBrains Mono', monospace; direction: ltr; font-weight: 600; }
+.history-empty { color: var(--text-dim); font-size: 12px; text-align: center; padding: 10px 0; font-weight: 600; }
+.error-msg { display: none; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--fire); border-radius: 6px; background: rgba(255,45,58,0.08); color: var(--fire-bright); font-size: 13px; font-weight: 700; text-align: center; }
+.error-msg.visible { display: block; }
+.footer-note { margin-top: 18px; text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--text-faint); font-weight: 600; }
+#heatmapCanvas { width: 100%; height: 200px; background: rgba(4,8,16,0.5); border: 1px solid var(--frame); border-radius: 8px; }
+
+@media (max-width: 768px) {
+.header { padding: 10px 16px; }
+.header-title { font-size: 24px; letter-spacing: 4px; }
+.tab-btn { font-size: 13px; padding: 12px 16px; min-width: 120px; }
+.main-content { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="stars2"></div>
+
+<div class="header">
+<div class="hud-topbar"><span><span class="dot"></span>النظام متصل</span><span style="direction:ltr;">BW · MK-VII</span></div>
+<div class="logo-wrap">
+<div class="brand-block">
+<div class="header-title">BLACK WOLF</div>
+<div class="header-sub">نظام الغرف المتعددة</div>
+</div>
+<div class="logo-circle">
+<img class="logo-img" src="https://image.qwenlm.ai/public_source/a85cc009-6ff7-4e90-8b57-cc525390156a/17e2987d9-c8b6-402d-a76e-3bec1b4f6e6e.png" alt="Black Wolf Logo">
+</div>
+</div>
+</div>
+
+<div class="tab-bar">
+<button type="button" class="tab-btn active" data-tab="gann">WOLF</button>
+<button type="button" class="tab-btn" data-tab="sk">WOLF RUN</button>
+<button type="button" class="tab-btn" data-tab="hold">WOLF HOLD</button>
+<button type="button" class="tab-btn" data-tab="flow">WOLF FLOW</button>
+<button type="button" class="tab-btn" data-tab="zone">WOLF ZONE</button>
+<button type="button" class="tab-btn" data-tab="harmonic">WOLF HARMONIC</button>
+</div>
+
+<div class="main-content">
+<div class="live-feed">
+<div class="live-feed-title">// بيانات الحساب المشتركة</div>
+<div class="form-group"><label>الرمز <span class="field-index">SYM</span></label><input type="text" id="symbolInput" class="input-control ltr-field" list="symbolSuggestions" placeholder="مثال: XAU/USD"><datalist id="symbolSuggestions"><option value="XAU/USD"><option value="XAG/USD"><option value="BTC/USD"><option value="ETH/USD"><option value="EUR/USD"><option value="GBP/USD"><option value="USD/JPY"></datalist></div>
+<div class="form-group"><label>مفتاح TwelveData API <span class="field-index">KEY</span></label><input type="text" id="apiKeyInput" class="input-control ltr-field" placeholder="الصق مفتاح API المجاني هنا"></div>
+<div class="room-note">الرمز والمفتاح دول مشتركين بين كل الغرف تحت. كل غرفة بعد كده مستقلة بالكامل بفريمها ونتايجها.</div>
+</div>
+
+<div class="live-feed">
+<div class="live-feed-title">// السياق العام للسوق</div>
+<div class="results-subtitle" style="margin-top:0;">// الجلسات النشطة الآن</div>
+<div id="sessionTags" style="margin-bottom:8px;"></div>
+<div class="feed-status" id="sessionStatus" style="text-align:center;"></div>
+<div class="results-subtitle">// توقع التقلب القادم</div>
+<button type="button" class="btn-secondary" id="volForecastBtn" onclick="fetchVolatilityForecast()">توقع التقلب القادم لهذا الرمز</button>
+<div class="feed-status" id="volForecastStatus">اضغط الزرار لجلب توقع التقلب بناءً على بيانات الأسبوع الماضي.</div>
+</div>
+
+<div class="tab-content active" id="tab-gann">
+<div class="live-feed">
+<div class="live-feed-title">// جلب تلقائي لهذه الغرفة</div>
+<div class="form-group"><label>الفريم الزمني <span class="field-index">TF</span></label><select id="tfGann" class="input-control"><option value="5min">5 دقايق</option><option value="15min" selected>15 دقيقة</option><option value="1h">ساعة</option><option value="4h">4 ساعات</option><option value="1day">يومي</option><option value="1week">أسبوعي</option></select></div>
+<button type="button" class="btn-secondary" id="fetchBtnGann" onclick="fetchGann()">جلب آخر قمة وقاع تلقائيًا</button>
+<div class="feed-status" id="feedStatusGann"></div>
+</div>
+<div class="form-group"><label>اتجاه السوق <span class="field-index">01</span></label><select id="trendGann" class="input-control"><option value="bullish">صاعد — الذئب في ارتفاع</option><option value="bearish">هابط — الذئب في انخفاض</option></select></div>
+<div class="form-group"><label>سعر القمة <span class="field-index">02</span></label><input type="number" id="highGann" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>سعر القاع <span class="field-index">03</span></label><input type="number" id="lowGann" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>الزمن (عدد الشموع السابقة) <span class="field-index">04</span></label><input type="number" id="barsGann" class="input-control ltr-field" placeholder="16"></div>
+<button type="button" class="btn-submit" onclick="calculateGann()">تنفيذ · احتساب الأهداف</button>
+<div class="error-msg" id="errorMsgGann">يجب ملء كل الحقول بأرقام صحيحة.</div>
+<div class="results-panel" id="resultsPanel">
+<div class="trade-badge" id="gannBadge" style="display:none;"></div>
+<div class="confirm-note" id="confirmGann">شمعة التأكيد: اجلب البيانات تلقائيًا لتفعيل الفحص.</div>
+<div class="confirm-note" id="mtfGann" style="margin-top:8px;">توافق الفريمات: يتفحص بعد كل حساب.</div>
+<div class="results-title">// مصفوفة الأهداف</div>
+<div class="result-row"><span class="result-label">الفارق السعري (Δ)</span><span class="result-value" id="resDelta">—</span></div>
+<div class="result-row"><span class="result-label">مستوى السعر المستهدف</span><span class="result-value" id="resPrice">—</span></div>
+<div class="result-row"><span class="result-label">الزمن المتوقع</span><span class="result-value" id="resTime">—</span></div>
+<div class="results-subtitle">// الأهداف الفنية القياسية</div>
+<div class="result-row"><span class="result-label">تصحيح الارتداد (الحد الأعلى)</span><span class="result-value" id="resCorrUp">—</span></div>
+<div class="result-row"><span class="result-label">تصحيح الارتداد (الحد الأدنى)</span><span class="result-value" id="resCorrDown">—</span></div>
+<div class="result-row"><span class="result-label">الامتداد الصاعد (بعد كسر القمة)</span><span class="result-value" id="resExtUp">—</span></div>
+<div class="result-row"><span class="result-label">الامتداد الهابط (بعد كسر القاع)</span><span class="result-value" id="resExtDown">—</span></div>
+<div class="results-subtitle">// مستويات فيبوناتشي إضافية</div>
+<div class="fib-table-wrap"><table class="fib-table"><thead><tr><th>النسبة</th><th>من القمة −</th><th>من القاع +</th></tr></thead><tbody id="fibTableBody"></tbody></table></div>
+<div class="results-subtitle">// الرسم البياني للأهداف</div>
+<div class="chart-wrap"><canvas id="gannChart" width="600" height="400"></canvas><div class="chart-legend" id="chartLegend"></div></div>
+<div class="action-buttons"><button type="button" class="btn-mini" id="copyBtn" onclick="copyResults()" disabled>نسخ النتائج</button><button type="button" class="btn-mini" id="exportBtn" onclick="exportCSV()" disabled>تصدير CSV</button></div>
+<div class="watch-block"><div class="form-group"><label>نسبة التنبيه (٪) <span class="field-index">±</span></label><input type="number" id="thresholdInput" class="input-control ltr-field" step="any" value="0.2"></div><button type="button" class="btn-secondary" id="watchBtn" onclick="toggleWatch()" disabled>بدء مراقبة السعر</button><div class="feed-status" id="watchStatus">احسب الهدف أولاً لتفعيل المراقبة.</div></div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-sk">
+<div class="live-feed">
+<div class="live-feed-title">// جلب تلقائي لهذه الغرفة</div>
+<div class="form-group"><label>الفريم الزمني <span class="field-index">TF</span></label><select id="tfSK" class="input-control"><option value="5min">5 دقايق</option><option value="15min" selected>15 دقيقة</option><option value="1h">ساعة</option><option value="4h">4 ساعات</option><option value="1day">يومي</option><option value="1week">أسبوعي</option></select></div>
+<button type="button" class="btn-secondary" id="fetchBtnSK" onclick="fetchSK()">جلب نقاط 0-A-B تلقائيًا</button>
+<div class="feed-status" id="feedStatusSK"></div>
+</div>
+<div class="form-group"><label>نقطة 0 (البداية) <span class="field-index">P0</span></label><input type="number" id="zeroSK" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>نقطة A (أول قمة/قاع) <span class="field-index">PA</span></label><input type="number" id="aSK" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>نقطة B (التصحيح الحالي) <span class="field-index">PB</span></label><input type="number" id="bSK" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<button type="button" class="btn-submit" onclick="calculateSK()">تنفيذ · تحليل السيكونس</button>
+<div class="error-msg" id="errorMsgSK">يجب ملء نقاط 0 وA وB بأرقام صحيحة.</div>
+<div class="history-panel" id="skPanel" style="display:none;">
+<div class="trade-badge" id="skBadge" style="display:none;"></div>
+<div class="confirm-note" id="confirmSK">شمعة التأكيد: اجلب البيانات تلقائيًا لتفعيل الفحص.</div>
+<div class="confirm-note" id="mtfSK" style="margin-top:8px;">توافق الفريمات: يتفحص بعد كل حساب.</div>
+<div class="results-title">// نظام SK · تسلسل 0 – A – B – C</div>
+<div class="result-row"><span class="result-label">نقطة 0 (بداية الانطلاقة)</span><span class="result-value" id="skZero">—</span></div>
+<div class="result-row"><span class="result-label">نقطة A (أول قمة/قاع)</span><span class="result-value" id="skA">—</span></div>
+<div class="result-row"><span class="result-label">نقطة B (التصحيح الحالي)</span><span class="result-value" id="skB">—</span></div>
+<div class="results-subtitle">// منطقة BC الذهبية (50% – 61.8%)</div>
+<div class="result-row"><span class="result-label">من</span><span class="result-value" id="skBCFrom">—</span></div>
+<div class="result-row"><span class="result-label">إلى</span><span class="result-value" id="skBCTo">—</span></div>
+<div class="results-subtitle">// خطة الصفقة المقترحة</div>
+<div class="result-row"><span class="result-label">نقطة الدخول (عند B)</span><span class="result-value" id="skEntry">—</span></div>
+<div class="result-row"><span class="result-label">وقف الخسارة</span><span class="result-value" id="skStop">—</span></div>
+<div class="result-row"><span class="result-label">هدف C (امتداد 161.8%)</span><span class="result-value" id="skTarget">—</span></div>
+<div class="result-row"><span class="result-label">نسبة العائد للمخاطرة</span><span class="result-value" id="skRR">—</span></div>
+<div class="results-subtitle">// جدول امتدادات C الإضافية</div>
+<div class="fib-table-wrap"><table class="fib-table"><thead><tr><th>النسبة</th><th>السعر المستهدف</th></tr></thead><tbody id="skExtTableBody"></tbody></table></div>
+<div class="feed-status" id="skStatus" style="margin-top:12px;">أدخل النقاط يدويًا أو اجلبها تلقائيًا فوق.</div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-hold">
+<div class="live-feed">
+<div class="live-feed-title">// جلب تلقائي لهذه الغرفة</div>
+<div class="form-group"><label>الفريم الزمني <span class="field-index">TF</span></label><select id="tfHold" class="input-control"><option value="5min">5 دقايق</option><option value="15min" selected>15 دقيقة</option><option value="1h">ساعة</option><option value="4h">4 ساعات</option><option value="1day">يومي</option><option value="1week">أسبوعي</option></select></div>
+<button type="button" class="btn-secondary" id="fetchBtnHold" onclick="fetchHold()">جلب القمة والقاع والإغلاق تلقائيًا</button>
+<div class="feed-status" id="feedStatusHold"></div>
+</div>
+<div class="form-group"><label>سعر القمة <span class="field-index">H</span></label><input type="number" id="highHold" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>سعر القاع <span class="field-index">L</span></label><input type="number" id="lowHold" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<div class="form-group"><label>سعر الإغلاق <span class="field-index">C</span></label><input type="number" id="closeHold" class="input-control ltr-field" step="any" placeholder="0.0000"></div>
+<button type="button" class="btn-submit" onclick="calculateHold()">تنفيذ · احتساب المستويات</button>
+<div class="error-msg" id="errorMsgHold">يجب ملء القمة والقاع والإغلاق بأرقام صحيحة.</div>
+<div class="history-panel" id="pivotPanel" style="display:none;">
+<div class="trade-badge" id="pivotBadge" style="display:none;"></div>
+<div class="confirm-note" id="confirmHold">شمعة التأكيد: اجلب البيانات تلقائيًا لتفعيل الفحص.</div>
+<div class="confirm-note" id="mtfHold" style="margin-top:8px;">توافق الفريمات: يتفحص بعد كل حساب.</div>
+<div class="results-title">// بيفوت بوينت الكلاسيكي (Standard)</div>
+<div class="fib-table-wrap"><table class="fib-table"><thead><tr><th>المستوى</th><th>السعر</th></tr></thead><tbody id="stdPivotBody"></tbody></table></div>
+<div class="results-subtitle">// كاماريلا (Camarilla) — مناسبة للسكالبينج</div>
+<div class="fib-table-wrap"><table class="fib-table"><thead><tr><th>المستوى</th><th>السعر</th></tr></thead><tbody id="camarillaBody"></tbody></table></div>
+<div class="feed-status" id="pivotStatus" style="margin-top:12px;">أدخل القمة والقاع والإغلاق يدويًا أو اجلبهم تلقائيًا فوق.</div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-flow">
+<div class="live-feed">
+<div class="live-feed-title">// جلب وتحليل الشموع</div>
+<div class="form-group"><label>الفريم الزمني <span class="field-index">TF</span></label><select id="tfFlow" class="input-control"><option value="5min">5 دقايق</option><option value="15min" selected>15 دقيقة</option><option value="1h">ساعة</option><option value="4h">4 ساعات</option><option value="1day">يومي</option><option value="1week">أسبوعي</option></select></div>
+<button type="button" class="btn-secondary" id="fetchBtnFlow" onclick="fetchFlow()">جلب الشموع وتحليل الهيكل</button>
+<div class="feed-status" id="feedStatusFlow"></div>
+<div class="room-note">هذه الغرفة تحتاج بيانات شموع حقيقية لتحليل الهيكل (BOS/CHoCH) والأوردر بلوك والفجوات السعرية — لا تدعم الإدخال اليدوي.</div>
+<button type="button" class="btn-secondary" id="reanalyzeBtnFlow" onclick="calculateFlow()" style="margin-top:10px;" disabled>إعادة تحليل آخر بيانات</button>
+</div>
+<div class="history-panel" id="flowPanel" style="display:none;">
+<div class="trade-badge" id="flowBadge" style="display:none;"></div>
+<div class="confirm-note" id="confirmFlow">شمعة التأكيد: سيتم الفحص تلقائيًا بعد التحليل.</div>
+<div class="rsi-note" id="rsiDivergenceNote">دايفرجنس RSI: بيتفحص تلقائيًا بعد التحليل.</div>
+<div class="confirm-note" id="mtfFlow" style="margin-top:8px;">توافق الفريمات: يتفحص بعد كل تحليل.</div>
+<div class="results-title">// هيكل السوق (Market Structure)</div>
+<div id="flowStructureTag" style="margin-bottom:10px;"></div>
+<div class="result-row"><span class="result-label">نقطة 1</span><span class="result-value" id="flowP1">—</span></div>
+<div class="result-row"><span class="result-label">نقطة 2</span><span class="result-value" id="flowP2">—</span></div>
+<div class="result-row"><span class="result-label">نقطة 3</span><span class="result-value" id="flowP3">—</span></div>
+<div class="result-row"><span class="result-label">نقطة 4 (الأحدث)</span><span class="result-value" id="flowP4">—</span></div>
+<div class="results-subtitle">// منطقة الأوردر بلوك (Order Block)</div>
+<div class="result-row"><span class="result-label">من</span><span class="result-value" id="flowOBFrom">—</span></div>
+<div class="result-row"><span class="result-label">إلى</span><span class="result-value" id="flowOBTo">—</span></div>
+<div class="results-subtitle">// الفجوة السعرية (Fair Value Gap)</div>
+<div class="result-row"><span class="result-label">النوع</span><span class="result-value" id="flowFVGType">—</span></div>
+<div class="result-row"><span class="result-label">من</span><span class="result-value" id="flowFVGFrom">—</span></div>
+<div class="result-row"><span class="result-label">إلى</span><span class="result-value" id="flowFVGTo">—</span></div>
+<div class="feed-status" id="flowStatus" style="margin-top:12px;">اجلب الشموع أولاً من زرار الجلب فوق.</div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-zone">
+<div class="live-feed">
+<div class="live-feed-title">// لوحة التقاطع</div>
+<div class="room-note">الغرفة دي مش بتجلب بيانات لوحدها — بتجمع تلقائيًا آخر نتيجة محسوبة في كل غرفة من الغرف التانية وتدور على مستويات قريبة من بعضها.</div>
+<div id="confluenceList"><div class="history-empty">احسب في غرفتين على الأقل الأول عشان تظهر مناطق التقاطع.</div></div>
+</div>
+<div class="results-panel visible">
+<div class="results-title">// ملخص الصفقة التلقائي</div>
+<div class="room-note" style="margin-bottom:10px;">بيتفعّل تلقائيًا لما 3 غرف على الأقل تتفق على نفس الاتجاه (شراء أو بيع) في نفس اللحظة.</div>
+<div id="autoTradeBrief"><div class="history-empty">لسه مفيش اتفاق كافٍ بين الغرف.</div></div>
+</div>
+<div class="results-panel visible">
+<div class="results-title">// الخريطة الحرارية للمستويات</div>
+<canvas id="heatmapCanvas" width="600" height="260" style="width:100%; height:200px; background:rgba(4,8,16,0.5); border:1px solid var(--frame); border-radius:8px;"></canvas>
+<div class="room-note">كل ما زادت كثافة اللون الأحمر في منطقة سعرية، كل ما زاد عدد المستويات اللي بتتقاطع فيها من غرف مختلفة.</div>
+</div>
+<div class="results-panel visible">
+<div class="results-title">// تلخيص التنبيهات</div>
+<div class="room-note" style="margin-bottom:10px;">بدل إشعار منفصل من كل غرفة، هتوصلك إشعار واحد مجمّع بس لما يحصل اتفاق قوي جديد بين الغرف.</div>
+<div class="feed-status" id="alertDigestStatus">لسه مفيش تنبيهات مجمّعة.</div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-harmonic">
+<div class="live-feed">
+<div class="live-feed-title">// جلب تلقائي لهذه الغرفة</div>
+<div class="form-group"><label>الفريم الزمني <span class="field-index">TF</span></label><select id="tfHarmonic" class="input-control"><option value="5min">5 دقايق</option><option value="15min" selected>15 دقيقة</option><option value="1h">ساعة</option><option value="4h">4 ساعات</option><option value="1day">يومي</option><option value="1week">أسبوعي</option></select></div>
+<button type="button" class="btn-secondary" id="fetchBtnHarmonic" onclick="fetchHarmonic()">جلب نقاط X-A-B-C-D وفحص النماذج</button>
+<div class="feed-status" id="feedStatusHarmonic"></div>
+<div class="room-note">هذه الغرفة تحتاج بيانات شموع حقيقية (5 نقاط تحول متتالية) — لا تدعم الإدخال اليدوي.</div>
+</div>
+<div class="history-panel" id="harmonicPanel" style="display:none;">
+<div class="trade-badge" id="harmonicBadge" style="display:none;"></div>
+<div class="results-title">// نقاط النموذج (X – A – B – C – D)</div>
+<div class="result-row"><span class="result-label">X</span><span class="result-value" id="harX">—</span></div>
+<div class="result-row"><span class="result-label">A</span><span class="result-value" id="harA">—</span></div>
+<div class="result-row"><span class="result-label">B</span><span class="result-value" id="harB">—</span></div>
+<div class="result-row"><span class="result-label">C</span><span class="result-value" id="harC">—</span></div>
+<div class="result-row"><span class="result-label">D (نقطة الانعكاس المحتملة)</span><span class="result-value" id="harD">—</span></div>
+<div class="results-subtitle">// نسب فيبوناتشي بين الأرجل</div>
+<div class="result-row"><span class="result-label">AB / XA</span><span class="result-value" id="harRatioAB">—</span></div>
+<div class="result-row"><span class="result-label">BC / AB</span><span class="result-value" id="harRatioBC">—</span></div>
+<div class="result-row"><span class="result-label">CD / BC</span><span class="result-value" id="harRatioCD">—</span></div>
+<div class="result-row"><span class="result-label">AD / XA (نسبة الإكمال)</span><span class="result-value" id="harRatioAD">—</span></div>
+<div class="results-subtitle">// خطة الصفقة عند D</div>
+<div class="result-row"><span class="result-label">الدخول</span><span class="result-value" id="harEntry">—</span></div>
+<div class="result-row"><span class="result-label">وقف الخسارة</span><span class="result-value" id="harStop">—</span></div>
+<div class="result-row"><span class="result-label">الهدف (تصحيح 38.2% من CD)</span><span class="result-value" id="harTarget">—</span></div>
+<div class="feed-status" id="harmonicStatus" style="margin-top:12px;"></div>
+</div>
+</div>
+
+<div class="history-panel" id="historyPanel">
+<div class="history-header"><div class="results-title" style="margin-bottom:0;">// سجل الحسابات السابقة</div><button type="button" class="history-clear" onclick="clearHistory()">مسح السجل</button></div>
+<div id="historyList"><div class="history-empty">لا يوجد حسابات سابقة بعد.</div></div>
+</div>
+<div class="footer-note">ست غرف مستقلة · WOLF · WOLF RUN · WOLF HOLD · WOLF FLOW · WOLF ZONE · WOLF HARMONIC</div>
+</div>
+
+<script>
+// ===== الحالة العامة =====
+let currentTarget = null;
+let watchTimer = null;
+let alerted = false;
+const POLL_INTERVAL_MS = 45000;
+let flowCandlesCache = null;
+let flowMetaCache = null;
+let roomLevels = { gann: null, sk: null, hold: null, flow: null, harmonic: null };
+const TF_HIERARCHY = { '5min': '15min', '15min': '1h', '1h': '4h', '4h': '1day', '1day': '1week', '1week': '1week' };
+let gannCandlesCache = null;
+let skCandlesCache = null;
+let holdCandlesCache = null;
+let skLastClose = null;
+let harmonicCandlesCache = null;
+const SWING_LOOKBACK = 150;
+const ZIGZAG_ATR_MULTIPLIER = 2.5;
+const SK_STOP_MARGIN_PCT = 0.15;
+const SK_EXT_RATIOS = [1, 1.272, 1.618, 2, 2.618];
+const FIB_RATIOS = [0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618, 2, 2.618];
+const CHART_COLORS = { 'القمة': '#5c7286', 'القاع': '#5c7286', 'الهدف الرئيسي': '#ff4b5c', 'تصحيح فوق': '#e6c98a', 'تصحيح تحت': '#e6c98a', 'امتداد صاعد': '#5be38a', 'امتداد هابط': '#5be38a' };
+const SESSIONS = [ { name: 'سيدني', start: 22, end: 7 }, { name: 'طوكيو', start: 0, end: 9 }, { name: 'لندن', start: 8, end: 17 }, { name: 'نيويورك', start: 13, end: 22 } ];
+const HISTORY_KEY = 'bw_history';
+const HISTORY_MAX = 20;
+const ROOM_TAGS = { gann: 'WOLF', sk: 'WOLF RUN', hold: 'WOLF HOLD', flow: 'WOLF FLOW', harmonic: 'WOLF HARMONIC' };
+const HARMONIC_PATTERNS = [ { name: 'Gartley', ab_xa: [0.55, 0.68], bc_ab: [0.35, 0.90], cd_bc: [1.10, 1.70], ad_xa: [0.75, 0.82] }, { name: 'Bat', ab_xa: [0.35, 0.53], bc_ab: [0.35, 0.90], cd_bc: [1.55, 2.65], ad_xa: [0.85, 0.90] }, { name: 'Butterfly', ab_xa: [0.75, 0.82], bc_ab: [0.35, 0.90], cd_bc: [1.55, 2.65], ad_xa: [1.20, 1.65] }, { name: 'Crab', ab_xa: [0.35, 0.65], bc_ab: [0.35, 0.90], cd_bc: [2.20, 3.65], ad_xa: [1.55, 1.65] } ];
+const CONFLUENCE_CLUSTER_PCT = 0.15;
+const AUTO_BRIEF_MIN_ROOMS = 3;
+let lastDigestSignature = null;
+
+// ===== التبديل بين الغرف - مهم جدًا =====
+function switchTab(name) {
+console.log('تم الضغط على:', name);
+document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+const activeBtn = document.querySelector('.tab-btn[data-tab="' + name + '"]');
+const activeTab = document.getElementById('tab-' + name);
+if (activeBtn) activeBtn.classList.add('active');
+if (activeTab) activeTab.classList.add('active');
+}
+
+// ===== ربط الأزرار بالأحداث عند تحميل الصفحة =====
+document.addEventListener('DOMContentLoaded', function() {
+console.log('الموقع جاهز - تم تحميل الصفحة');
+const savedSymbol = localStorage.getItem('bw_symbol');
+const savedKey = localStorage.getItem('bw_apikey');
+if (savedSymbol) document.getElementById('symbolInput').value = savedSymbol;
+if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
+['tfGann', 'tfSK', 'tfHold', 'tfFlow', 'tfHarmonic'].forEach(id => {
+const saved = localStorage.getItem('bw_tf_' + id);
+if (saved) document.getElementById(id).value = saved;
+});
+renderHistory();
+updateSessionIndicator();
+setInterval(updateSessionIndicator, 60000);
+
+// ربط أزرار التبويب
+document.querySelectorAll('.tab-btn').forEach(btn => {
+btn.addEventListener('click', function(e) {
+e.preventDefault();
+e.stopPropagation();
+console.log('تم النقر على زر:', this.dataset.tab);
+switchTab(this.dataset.tab);
+});
+});
+});
+
+// ===== باقي الدوال (مختصرة) =====
+async function fetchTimeSeries(tfId, statusId, btnId) {
+const symbol = document.getElementById('symbolInput').value.trim();
+const apiKey = document.getElementById('apiKeyInput').value.trim();
+const timeframe = document.getElementById(tfId).value;
+const timeframeLabel = document.getElementById(tfId).selectedOptions[0].textContent;
+const statusEl = document.getElementById(statusId);
+const btn = document.getElementById(btnId);
+statusEl.className = 'feed-status';
+if (!symbol || !apiKey) { statusEl.textContent = 'أدخل الرمز ومفتاح API أولاً.'; statusEl.classList.add('error'); return null; }
+localStorage.setItem('bw_symbol', symbol);
+localStorage.setItem('bw_apikey', apiKey);
+localStorage.setItem('bw_tf_' + tfId, timeframe);
+btn.disabled = true;
+statusEl.textContent = 'جاري الجلب على فريم (' + timeframeLabel + ')...';
+try {
+const url = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) + '&interval=' + encodeURIComponent(timeframe) + '&outputsize=' + SWING_LOOKBACK + '&apikey=' + encodeURIComponent(apiKey);
+const res = await fetch(url);
+const data = await res.json();
+if (data.status === 'error' || data.code) { statusEl.textContent = 'خطأ: ' + (data.message || 'رمز أو فريم أو مفتاح API غير صحيح'); statusEl.classList.add('error'); return null; }
+const raw = data.values;
+if (!raw || raw.length < 10) { statusEl.textContent = 'لا توجد بيانات كافية.'; statusEl.classList.add('error'); return null; }
+const chronological = raw.slice().reverse().map(c => ({ open: parseFloat(c.open), high: parseFloat(c.high), low: parseFloat(c.low), close: parseFloat(c.close) }));
+const avgRange = chronological.reduce((sum, c) => sum + (c.high - c.low), 0) / chronological.length;
+const deviation = avgRange * ZIGZAG_ATR_MULTIPLIER;
+const latestClose = chronological[chronological.length - 1].close;
+statusEl.classList.add('ok');
+return { chronological, latestClose, deviation, timeframeLabel, symbol };
+} catch (err) { statusEl.textContent = 'خطأ في الشبكة.'; statusEl.classList.add('error'); return null; } finally { btn.disabled = false; }
+}
+
+async function checkMTFAlignment(currentTfId, direction, statusElId) {
+const statusEl = document.getElementById(statusElId);
+const currentTf = document.getElementById(currentTfId).value;
+const higherTf = TF_HIERARCHY[currentTf];
+if (higherTf === currentTf) { statusEl.className = 'confirm-note'; statusEl.textContent = 'توافق الفريمات: أنت بالفعل على أعلى فريم متاح.'; return; }
+const symbol = document.getElementById('symbolInput').value.trim();
+const apiKey = document.getElementById('apiKeyInput').value.trim();
+if (!symbol || !apiKey) { statusEl.className = 'confirm-note'; statusEl.textContent = 'توافق الفريمات: أدخل الرمز والمفتاح.'; return; }
+statusEl.className = 'confirm-note';
+statusEl.textContent = 'جاري فحص التوافق مع الفريم الأكبر (' + higherTf + ')...';
+try {
+const url = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) + '&interval=' + encodeURIComponent(higherTf) + '&outputsize=100&apikey=' + encodeURIComponent(apiKey);
+const res = await fetch(url);
+const data = await res.json();
+if (data.status === 'error' || data.code) { statusEl.textContent = 'توافق الفريمات: تعذر الفحص.'; return; }
+const raw = data.values;
+if (!raw || raw.length < 10) { statusEl.textContent = 'توافق الفريمات: بيانات غير كافية.'; return; }
+const chronological = raw.slice().reverse().map(c => ({ open: parseFloat(c.open), high: parseFloat(c.high), low: parseFloat(c.low), close: parseFloat(c.close) }));
+const avgRange = chronological.reduce((sum, c) => sum + (c.high - c.low), 0) / chronological.length;
+const deviation = avgRange * ZIGZAG_ATR_MULTIPLIER;
+const swing = findLastSwing(chronological, deviation);
+if (swing.trend === direction) { statusEl.className = 'confirm-note found'; statusEl.textContent = '✅ متوافق — الفريم الأكبر في نفس الاتجاه.'; }
+else { statusEl.className = 'confirm-note'; statusEl.textContent = '️ متعارض — الفريم الأكبر في اتجاه عكسي.'; }
+} catch (err) { statusEl.textContent = 'توافق الفريمات: خطأ في الشبكة.'; }
+}
+
+function zigZagPivots(candles, deviation) {
+const pivots = [];
+let direction = 0;
+let extremeIdx = 0;
+let extremeHigh = candles[0].high;
+let extremeLow = candles[0].low;
+for (let i = 1; i < candles.length; i++) {
+const c = candles[i];
+if (direction <= 0) {
+if (c.low < extremeLow) { extremeLow = c.low; extremeIdx = i; }
+const riseFromLow = c.high - extremeLow;
+if (riseFromLow >= deviation) { if (direction === -1) pivots.push({ idx: extremeIdx, price: extremeLow, type: 'low' }); direction = 1; extremeHigh = c.high; extremeIdx = i; continue; }
+}
+if (direction >= 0) {
+if (c.high > extremeHigh) { extremeHigh = c.high; extremeIdx = i; }
+const dropFromHigh = extremeHigh - c.low;
+if (dropFromHigh >= deviation) { if (direction === 1) pivots.push({ idx: extremeIdx, price: extremeHigh, type: 'high' }); direction = -1; extremeLow = c.low; extremeIdx = i; }
+}
+}
+return pivots;
+}
+
+function findLastSwing(candles, deviation) {
+const pivots = zigZagPivots(candles, deviation);
+if (pivots.length >= 2) {
+const p1 = pivots[pivots.length - 2];
+const p2 = pivots[pivots.length - 1];
+const highPivot = p1.type === 'high' ? p1 : p2;
+const lowPivot = p1.type === 'low' ? p1 : p2;
+let sk = null;
+if (pivots.length >= 3) sk = { zero: pivots[pivots.length - 3], A: pivots[pivots.length - 2], B: pivots[pivots.length - 1] };
+return { high: highPivot.price, low: lowPivot.price, bars: Math.abs(highPivot.idx - lowPivot.idx) || 1, trend: highPivot.idx > lowPivot.idx ? 'bullish' : 'bearish', fallback: false, sk: sk };
+}
+const highs = candles.map(c => c.high);
+const lows = candles.map(c => c.low);
+const maxVal = Math.max(...highs);
+const minVal = Math.min(...lows);
+const maxIdx = highs.indexOf(maxVal);
+const minIdx = lows.indexOf(minVal);
+return { high: maxVal, low: minVal, bars: Math.abs(maxIdx - minIdx) || 1, trend: maxIdx > minIdx ? 'bullish' : 'bearish', fallback: true, sk: null };
+}
+
+function detectCandlePattern(candles, i) {
+const c = candles[i];
+const body = Math.abs(c.close - c.open);
+const range = c.high - c.low;
+if (range <= 0) return null;
+const upperWick = c.high - Math.max(c.open, c.close);
+const lowerWick = Math.min(c.open, c.close) - c.low;
+if (i > 0) {
+const prev = candles[i - 1];
+const prevBody = Math.abs(prev.close - prev.open);
+const isBullishEngulf = (c.close > c.open) && (prev.close < prev.open) && c.close >= prev.open && c.open <= prev.close && body > prevBody;
+const isBearishEngulf = (c.close < c.open) && (prev.close > prev.open) && c.close <= prev.open && c.open >= prev.close && body > prevBody;
+if (isBullishEngulf) return { name: 'ابتلاع صاعد', direction: 'bullish' };
+if (isBearishEngulf) return { name: 'ابتلاع هابط', direction: 'bearish' };
+}
+if (body > 0 && lowerWick >= body * 2 && upperWick <= body * 0.6) return { name: 'پين بار (مطرقة)', direction: 'bullish' };
+if (body > 0 && upperWick >= body * 2 && lowerWick <= body * 0.6) return { name: 'پين بار — رفض من الأعلى', direction: 'bearish' };
+if (body <= range * 0.1) return { name: 'دوجي — تردد', direction: 'neutral' };
+return null;
+}
+
+function checkEntryConfirmation(candles, zoneLow, zoneHigh) {
+if (!candles || candles.length < 4) return { found: false };
+const lo = Math.min(zoneLow, zoneHigh), hi = Math.max(zoneLow, zoneHigh);
+const n = candles.length;
+for (let i = n - 1; i >= n - 3 && i >= 1; i--) {
+const c = candles[i];
+const overlaps = c.low <= hi && c.high >= lo;
+if (!overlaps) continue;
+const pattern = detectCandlePattern(candles, i);
+if (pattern) return { found: true, pattern: pattern.name, direction: pattern.direction };
+}
+return { found: false };
+}
+
+function renderConfirmNote(elId, candles, zoneLow, zoneHigh) {
+const el = document.getElementById(elId);
+if (!candles) { el.className = 'confirm-note'; el.textContent = 'شمعة التأكيد: اجلب البيانات تلقائيًا لتفعيل الفحص.'; return; }
+const result = checkEntryConfirmation(candles, zoneLow, zoneHigh);
+if (result.found) {
+const dirLabel = result.direction === 'bullish' ? 'شراء' : (result.direction === 'bearish' ? 'بيع' : 'تنبيه');
+el.className = 'confirm-note found';
+el.textContent = '✅ تأكيد دخول (' + dirLabel + ') — ' + result.pattern + ' عند المنطقة المحسوبة';
+} else { el.className = 'confirm-note'; el.textContent = 'لا يوجد تأكيد شمعي عند المنطقة حتى الآن.'; }
+}
+
+async function fetchGann() {
+const data = await fetchTimeSeries('tfGann', 'feedStatusGann', 'fetchBtnGann');
+if (!data) return;
+const swing = findLastSwing(data.chronological, data.deviation);
+gannCandlesCache = data.chronological;
+document.getElementById('highGann').value = swing.high.toFixed(4);
+document.getElementById('lowGann').value = swing.low.toFixed(4);
+document.getElementById('barsGann').value = swing.bars;
+document.getElementById('trendGann').value = swing.trend;
+const statusEl = document.getElementById('feedStatusGann');
+statusEl.textContent = data.symbol + ' (' + data.timeframeLabel + ') — القمة: ' + swing.high.toFixed(4) + ' · القاع: ' + swing.low.toFixed(4) + ' · الفارق: ' + swing.bars + ' شمعة';
+statusEl.classList.add('ok');
+calculateGann();
+}
+
+function calculateGann() {
+const trend = document.getElementById('trendGann').value;
+const high = parseFloat(document.getElementById('highGann').value);
+const low = parseFloat(document.getElementById('lowGann').value);
+const candles = parseFloat(document.getElementById('barsGann').value);
+const errorMsg = document.getElementById('errorMsgGann');
+const resultsPanel = document.getElementById('resultsPanel');
+if (isNaN(high) || !high || isNaN(low) || !low || isNaN(candles) || !candles) { errorMsg.classList.add('visible'); resultsPanel.classList.remove('visible'); return; }
+errorMsg.classList.remove('visible');
+const delta = high - low;
+let targetPrice;
+if (trend === 'bearish') targetPrice = (delta / 1.618) + low; else targetPrice = high - (delta * 1.618);
+const targetTime = Math.round(candles * 1.618);
+const corrUp = low + (delta / 1.618);
+const corrDown = high - (delta / 1.618);
+const extUp = low + (delta * 1.618);
+const extDown = high - (delta * 1.618);
+document.getElementById('resDelta').textContent = delta.toFixed(2);
+document.getElementById('resPrice').textContent = targetPrice.toFixed(2);
+document.getElementById('resTime').textContent = targetTime + ' شمعة';
+document.getElementById('resCorrUp').textContent = corrUp.toFixed(2);
+document.getElementById('resCorrDown').textContent = corrDown.toFixed(2);
+document.getElementById('resExtUp').textContent = extUp.toFixed(2);
+document.getElementById('resExtDown').textContent = extDown.toFixed(2);
+resultsPanel.classList.add('visible');
+const gannBadge = document.getElementById('gannBadge');
+gannBadge.style.display = 'flex';
+if (trend === 'bearish') { gannBadge.className = 'trade-badge buy'; gannBadge.innerHTML = '<span>شراء — توقع ارتداد صاعد</span><span class="tb-note">هدف: ' + targetPrice.toFixed(2) + '</span>'; }
+else { gannBadge.className = 'trade-badge sell'; gannBadge.innerHTML = '<span>بيع — توقع ارتداد هابط</span><span class="tb-note">هدف: ' + targetPrice.toFixed(2) + '</span>'; }
+currentTarget = targetPrice;
+alerted = false;
+document.getElementById('watchBtn').disabled = false;
+document.getElementById('watchStatus').textContent = 'تم تثبيت الهدف عند ' + targetPrice.toFixed(2) + '.';
+renderFibTable(high, low, delta);
+const levels = { 'القمة': high, 'القاع': low, 'الهدف الرئيسي': targetPrice, 'تصحيح فوق': corrUp, 'تصحيح تحت': corrDown, 'امتداد صاعد': extUp, 'امتداد هابط': extDown };
+drawChart(high, low, levels);
+document.getElementById('copyBtn').disabled = false;
+document.getElementById('exportBtn').disabled = false;
+const gannMargin = Math.abs(delta) * 0.1 || targetPrice * 0.001;
+renderConfirmNote('confirmGann', gannCandlesCache, targetPrice - gannMargin, targetPrice + gannMargin);
+checkMTFAlignment('tfGann', trend, 'mtfGann');
+roomLevels.gann = { targetPrice, corrUp, corrDown, extUp, extDown, direction: (trend === 'bearish' ? 'buy' : 'sell') };
+renderConfluence();
+saveHistoryEntry({ time: new Date().toISOString(), room: 'gann', symbol: document.getElementById('symbolInput').value.trim() || '—', label: (trend === 'bearish' ? 'هابط' : 'صاعد'), resultText: 'هدف: ' + targetPrice.toFixed(2) });
+}
+
+function renderFibTable(high, low, delta) {
+const body = document.getElementById('fibTableBody');
+body.innerHTML = '';
+FIB_RATIOS.forEach(ratio => {
+const fromHigh = high - (delta * ratio);
+const fromLow = low + (delta * ratio);
+const row = document.createElement('tr');
+if (ratio === 0.618 || ratio === 1.618) row.className = 'golden';
+row.innerHTML = '<td>' + ratio.toFixed(3) + '</td><td>' + fromHigh.toFixed(2) + '</td><td>' + fromLow.toFixed(2) + '</td>';
+body.appendChild(row);
+});
+}
+
+function drawChart(high, low, levels) {
+const canvas = document.getElementById('gannChart');
+const ctx = canvas.getContext('2d');
+const w = canvas.width, h = canvas.height;
+ctx.clearRect(0, 0, w, h);
+const values = Object.values(levels);
+const maxVal = Math.max(...values);
+const minVal = Math.min(...values);
+const pad = (maxVal - minVal) * 0.12 || 1;
+const top = maxVal + pad, bottom = minVal - pad;
+const marginX = 90, marginY = 20;
+const yFor = (val) => marginY + (top - val) / (top - bottom) * (h - marginY * 2);
+ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+ctx.lineWidth = 1;
+for (let i = 0; i <= 4; i++) { const y = marginY + (h - marginY * 2) * (i / 4); ctx.beginPath(); ctx.moveTo(marginX, y); ctx.lineTo(w - 20, y); ctx.stroke(); }
+Object.keys(levels).forEach(key => {
+const val = levels[key];
+const y = yFor(val);
+const color = CHART_COLORS[key] || '#dfeaf5';
+const isRef = (key === 'القمة' || key === 'القاع');
+ctx.strokeStyle = color;
+ctx.lineWidth = isRef ? 1 : 2;
+if (isRef) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
+ctx.beginPath(); ctx.moveTo(marginX, y); ctx.lineTo(w - 20, y); ctx.stroke();
+ctx.setLineDash([]);
+ctx.fillStyle = color;
+ctx.font = '600 13px monospace';
+ctx.textAlign = 'left'; ctx.direction = 'ltr';
+ctx.fillText(val.toFixed(2), w - 18, y + 4);
+});
+const legend = document.getElementById('chartLegend');
+legend.innerHTML = '';
+Object.keys(levels).forEach(key => {
+const color = CHART_COLORS[key] || '#dfeaf5';
+const item = document.createElement('span');
+item.innerHTML = '<i style="background:' + color + '"></i>' + key;
+legend.appendChild(item);
+});
+}
+
+function copyResults() {
+const symbol = document.getElementById('symbolInput').value.trim() || '—';
+const lines = ['بلاك وولف · نتائج الحساب', 'الرمز: ' + symbol, 'الفارق السعري (Δ): ' + document.getElementById('resDelta').textContent, 'مستوى السعر المستهدف: ' + document.getElementById('resPrice').textContent, 'الزمن المتوقع: ' + document.getElementById('resTime').textContent, 'تصحيح الارتداد (فوق): ' + document.getElementById('resCorrUp').textContent, 'تصحيح الارتداد (تحت): ' + document.getElementById('resCorrDown').textContent, 'الامتداد الصاعد: ' + document.getElementById('resExtUp').textContent, 'الامتداد الهابط: ' + document.getElementById('resExtDown').textContent];
+const text = lines.join('\n');
+const btn = document.getElementById('copyBtn');
+if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(() => flashCopied(btn)); }
+else { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); flashCopied(btn); }
+}
+function flashCopied(btn) { const original = btn.textContent; btn.textContent = 'تم النسخ ✓'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1800); }
+
+function exportCSV() {
+const symbol = document.getElementById('symbolInput').value.trim() || 'symbol';
+const rows = [['البند', 'القيمة'], ['الرمز', symbol], ['الفارق السعري', document.getElementById('resDelta').textContent], ['مستوى السعر المستهدف', document.getElementById('resPrice').textContent], ['الزمن المتوقع', document.getElementById('resTime').textContent], ['تصحيح الارتداد فوق', document.getElementById('resCorrUp').textContent], ['تصحيح الارتداد تحت', document.getElementById('resCorrDown').textContent], ['الامتداد الصاعد', document.getElementById('resExtUp').textContent], ['الامتداد الهابط', document.getElementById('resExtDown').textContent]];
+const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'black_wolf_' + symbol.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Date.now() + '.csv';
+document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function toggleWatch() { if (watchTimer) stopWatch(); else startWatch(); }
+function startWatch() {
+const symbol = document.getElementById('symbolInput').value.trim();
+const apiKey = document.getElementById('apiKeyInput').value.trim();
+const watchStatus = document.getElementById('watchStatus');
+if (!symbol || !apiKey) { watchStatus.textContent = 'أدخل الرمز ومفتاح API أولاً.'; return; }
+if (currentTarget === null) { watchStatus.textContent = 'احسب الهدف أولاً.'; return; }
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+const watchBtn = document.getElementById('watchBtn');
+watchBtn.textContent = 'إيقاف مراقبة السعر';
+watchBtn.classList.add('active');
+watchStatus.textContent = 'جارِ مراقبة ' + symbol + ' كل 45 ثانية...';
+checkPrice();
+watchTimer = setInterval(checkPrice, POLL_INTERVAL_MS);
+}
+function stopWatch() { clearInterval(watchTimer); watchTimer = null; const watchBtn = document.getElementById('watchBtn'); watchBtn.textContent = 'بدء مراقبة السعر'; watchBtn.classList.remove('active'); document.getElementById('watchStatus').textContent = 'تم إيقاف المراقبة.'; }
+async function checkPrice() {
+const symbol = document.getElementById('symbolInput').value.trim();
+const apiKey = document.getElementById('apiKeyInput').value.trim();
+const threshold = parseFloat(document.getElementById('thresholdInput').value) || 0.2;
+const watchStatus = document.getElementById('watchStatus');
+try {
+const url = 'https://api.twelvedata.com/quote?symbol=' + encodeURIComponent(symbol) + '&apikey=' + encodeURIComponent(apiKey);
+const res = await fetch(url);
+const data = await res.json();
+if (data.status === 'error' || data.code) { watchStatus.textContent = 'خطأ: ' + (data.message || 'تم إيقاف المراقبة مؤقتًا'); return; }
+const price = parseFloat(data.close);
+const distancePct = Math.abs(price - currentTarget) / currentTarget * 100;
+watchStatus.textContent = 'آخر سعر: ' + price.toFixed(4) + ' · المسافة إلى الهدف: ' + distancePct.toFixed(3) + '%';
+if (distancePct <= threshold && !alerted) { alerted = true; fireAlert(symbol, price); }
+} catch (err) { watchStatus.textContent = 'خطأ في الشبكة أثناء المراقبة.'; }
+}
+function fireAlert(symbol, price) {
+const resultsPanel = document.getElementById('resultsPanel');
+resultsPanel.classList.add('alert-fire');
+setTimeout(() => resultsPanel.classList.remove('alert-fire'), 3000);
+playBeep();
+if ('Notification' in window && Notification.permission === 'granted') { new Notification('بلاك وولف · اقتراب من الهدف', { body: symbol + ' يقترب من هدفك عند ' + currentTarget.toFixed(2) + ' (الحالي: ' + price.toFixed(4) + ')' }); }
+}
+function playBeep() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'sine'; osc.frequency.value = 880; gain.gain.value = 0.15; osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.35); } catch (e) {} }
+
+async function fetchSK() {
+const data = await fetchTimeSeries('tfSK', 'feedStatusSK', 'fetchBtnSK');
+if (!data) return;
+const swing = findLastSwing(data.chronological, data.deviation);
+skCandlesCache = data.chronological;
+const statusEl = document.getElementById('feedStatusSK');
+if (!swing.sk) { statusEl.textContent = 'لم يتم رصد تسلسل 0-A-B واضح.'; statusEl.classList.remove('ok'); statusEl.classList.add('error'); return; }
+document.getElementById('zeroSK').value = swing.sk.zero.price.toFixed(4);
+document.getElementById('aSK').value = swing.sk.A.price.toFixed(4);
+document.getElementById('bSK').value = swing.sk.B.price.toFixed(4);
+skLastClose = data.latestClose;
+statusEl.textContent = data.symbol + ' (' + data.timeframeLabel + ') — تم رصد تسلسل 0-A-B تلقائيًا.';
+statusEl.classList.add('ok');
+calculateSK();
+}
+
+function calculateSK() {
+const zero = parseFloat(document.getElementById('zeroSK').value);
+const A = parseFloat(document.getElementById('aSK').value);
+const B = parseFloat(document.getElementById('bSK').value);
+const errorMsg = document.getElementById('errorMsgSK');
+const panel = document.getElementById('skPanel');
+if (isNaN(zero) || isNaN(A) || isNaN(B) || !zero || !A || !B) { errorMsg.classList.add('visible'); panel.style.display = 'none'; return; }
+errorMsg.classList.remove('visible');
+panel.style.display = 'block';
+const isBullishLeg = A > zero;
+const waveRange = Math.abs(A - zero);
+let bcFrom, bcTo;
+if (isBullishLeg) { bcFrom = A - (waveRange * 0.618); bcTo = A - (waveRange * 0.5); } else { bcFrom = A + (waveRange * 0.5); bcTo = A + (waveRange * 0.618); }
+const stopMargin = B * (SK_STOP_MARGIN_PCT / 100);
+const stop = isBullishLeg ? (B - stopMargin) : (B + stopMargin);
+const target161 = isBullishLeg ? (B + waveRange * 1.618) : (B - waveRange * 1.618);
+const risk = Math.abs(B - stop);
+const reward = Math.abs(target161 - B);
+const rr = risk > 0 ? (reward / risk) : 0;
+const skBadge = document.getElementById('skBadge');
+skBadge.style.display = 'flex';
+if (isBullishLeg) { skBadge.className = 'trade-badge buy'; skBadge.innerHTML = '<span>شراء — دخول عند B</span><span class="tb-note">هدف C: ' + target161.toFixed(2) + '</span>'; }
+else { skBadge.className = 'trade-badge sell'; skBadge.innerHTML = '<span>بيع — دخول عند B</span><span class="tb-note">هدف C: ' + target161.toFixed(2) + '</span>'; }
+document.getElementById('skZero').textContent = zero.toFixed(2);
+document.getElementById('skA').textContent = A.toFixed(2);
+document.getElementById('skB').textContent = B.toFixed(2);
+document.getElementById('skBCFrom').textContent = bcFrom.toFixed(2);
+document.getElementById('skBCTo').textContent = bcTo.toFixed(2);
+document.getElementById('skEntry').textContent = B.toFixed(2);
+document.getElementById('skStop').textContent = stop.toFixed(2);
+document.getElementById('skTarget').textContent = target161.toFixed(2);
+document.getElementById('skRR').textContent = '1 : ' + rr.toFixed(2);
+const extBody = document.getElementById('skExtTableBody');
+extBody.innerHTML = '';
+SK_EXT_RATIOS.forEach(ratio => {
+const val = isBullishLeg ? (B + waveRange * ratio) : (B - waveRange * ratio);
+const row = document.createElement('tr');
+if (ratio === 1.618) row.className = 'golden';
+row.innerHTML = '<td>' + (ratio * 100).toFixed(1) + '%</td><td>' + val.toFixed(2) + '</td>';
+extBody.appendChild(row);
+});
+const statusEl = document.getElementById('skStatus');
+if (skLastClose !== null) {
+const inBCZone = skLastClose >= Math.min(bcFrom, bcTo) && skLastClose <= Math.max(bcFrom, bcTo);
+statusEl.textContent = inBCZone ? 'السعر الحالي (' + skLastClose.toFixed(2) + ') داخل منطقة BC الذهبية الآن.' : 'السعر الحالي (' + skLastClose.toFixed(2) + ') خارج منطقة BC حاليًا.';
+} else { statusEl.textContent = 'تم الحساب بناءً على النقاط المدخلة يدويًا.'; }
+renderConfirmNote('confirmSK', skCandlesCache, bcFrom, bcTo);
+checkMTFAlignment('tfSK', (isBullishLeg ? 'bullish' : 'bearish'), 'mtfSK');
+roomLevels.sk = { entry: B, target: target161, bcFrom, bcTo, direction: (isBullishLeg ? 'buy' : 'sell') };
+renderConfluence();
+saveHistoryEntry({ time: new Date().toISOString(), room: 'sk', symbol: document.getElementById('symbolInput').value.trim() || '—', label: (isBullishLeg ? 'صاعد' : 'هابط'), resultText: 'دخول: ' + B.toFixed(2) + ' · هدف: ' + target161.toFixed(2) });
+}
+
+async function fetchHold() {
+const data = await fetchTimeSeries('tfHold', 'feedStatusHold', 'fetchBtnHold');
+if (!data) return;
+const swing = findLastSwing(data.chronological, data.deviation);
+holdCandlesCache = data.chronological;
+document.getElementById('highHold').value = swing.high.toFixed(4);
+document.getElementById('lowHold').value = swing.low.toFixed(4);
+document.getElementById('closeHold').value = data.latestClose.toFixed(4);
+const statusEl = document.getElementById('feedStatusHold');
+statusEl.textContent = data.symbol + ' (' + data.timeframeLabel + ') — تم جلب القمة والقاع والإغلاق.';
+statusEl.classList.add('ok');
+calculateHold();
+}
+
+function calculateHold() {
+const high = parseFloat(document.getElementById('highHold').value);
+const low = parseFloat(document.getElementById('lowHold').value);
+const close = parseFloat(document.getElementById('closeHold').value);
+const errorMsg = document.getElementById('errorMsgHold');
+const panel = document.getElementById('pivotPanel');
+if (isNaN(high) || isNaN(low) || isNaN(close) || !high || !low || !close) { errorMsg.classList.add('visible'); panel.style.display = 'none'; return; }
+errorMsg.classList.remove('visible');
+panel.style.display = 'block';
+const range = high - low;
+const pp = (high + low + close) / 3;
+const r1 = (2 * pp) - low, s1 = (2 * pp) - high;
+const r2 = pp + range, s2 = pp - range;
+const r3 = high + 2 * (pp - low), s3 = low - 2 * (high - pp);
+const stdRows = [['R3', r3], ['R2', r2], ['R1', r1], ['PP (المحور)', pp], ['S1', s1], ['S2', s2], ['S3', s3]];
+const stdBody = document.getElementById('stdPivotBody');
+stdBody.innerHTML = '';
+stdRows.forEach(row => { const tr = document.createElement('tr'); if (row[0].includes('PP')) tr.className = 'golden'; tr.innerHTML = '<td>' + row[0] + '</td><td>' + row[1].toFixed(2) + '</td>'; stdBody.appendChild(tr); });
+const camR4 = close + range * 1.1 / 2, camR3 = close + range * 1.1 / 4;
+const camR2 = close + range * 1.1 / 6, camR1 = close + range * 1.1 / 12;
+const camS1 = close - range * 1.1 / 12, camS2 = close - range * 1.1 / 6;
+const camS3 = close - range * 1.1 / 4, camS4 = close - range * 1.1 / 2;
+const camRows = [['R4', camR4], ['R3', camR3], ['R2', camR2], ['R1', camR1], ['S1', camS1], ['S2', camS2], ['S3', camS3], ['S4', camS4]];
+const camBody = document.getElementById('camarillaBody');
+camBody.innerHTML = '';
+camRows.forEach(row => { const tr = document.createElement('tr'); if (row[0] === 'R3' || row[0] === 'S3') tr.className = 'golden'; tr.innerHTML = '<td>' + row[0] + '</td><td>' + row[1].toFixed(2) + '</td>'; camBody.appendChild(tr); });
+const badge = document.getElementById('pivotBadge');
+badge.style.display = 'flex';
+if (close >= pp) { badge.className = 'trade-badge buy'; badge.innerHTML = '<span>شراء — السعر فوق المحور</span><span class="tb-note">دعم: ' + camS1.toFixed(2) + '</span>'; }
+else { badge.className = 'trade-badge sell'; badge.innerHTML = '<span>بيع — السعر تحت المحور</span><span class="tb-note">مقاومة: ' + camR1.toFixed(2) + '</span>'; }
+document.getElementById('pivotStatus').textContent = 'السعر: ' + close.toFixed(2) + ' · المحور (PP): ' + pp.toFixed(2);
+const holdMargin = range * 0.08 || close * 0.001;
+const holdZoneCenter = close >= pp ? camS1 : camR1;
+renderConfirmNote('confirmHold', holdCandlesCache, holdZoneCenter - holdMargin, holdZoneCenter + holdMargin);
+checkMTFAlignment('tfHold', (close >= pp ? 'bullish' : 'bearish'), 'mtfHold');
+roomLevels.hold = { pp, r1, s1, r2, s2, camR1, camS1, camR2, camS2, direction: (close >= pp ? 'buy' : 'sell') };
+renderConfluence();
+saveHistoryEntry({ time: new Date().toISOString(), room: 'hold', symbol: document.getElementById('symbolInput').value.trim() || '—', label: (close >= pp ? 'فوق المحور' : 'تحت المحور'), resultText: 'PP: ' + pp.toFixed(2) });
+}
+
+async function fetchFlow() {
+const data = await fetchTimeSeries('tfFlow', 'feedStatusFlow', 'fetchBtnFlow');
+if (!data) return;
+flowCandlesCache = data.chronological;
+flowMetaCache = { deviation: data.deviation, symbol: data.symbol, timeframeLabel: data.timeframeLabel };
+const statusEl = document.getElementById('feedStatusFlow');
+statusEl.textContent = data.symbol + ' (' + data.timeframeLabel + ') — تم جلب ' + data.chronological.length + ' شمعة.';
+statusEl.classList.add('ok');
+document.getElementById('reanalyzeBtnFlow').disabled = false;
+calculateFlow();
+}
+
+function findBreakIndex(candles, fromIdx, toIdx, level, isBullishBreak) {
+for (let i = fromIdx; i <= toIdx; i++) { if (isBullishBreak && candles[i].close > level) return i; if (!isBullishBreak && candles[i].close < level) return i; }
+return toIdx;
+}
+function findOrderBlock(candles, fromIdx, toIdx, wantBearishCandle) {
+for (let i = toIdx; i >= fromIdx; i--) { const c = candles[i]; const isBearish = c.close < c.open; if (wantBearishCandle === isBearish) return c; }
+return candles[fromIdx];
+}
+function findLastFVG(candles, fromIdx, toIdx) {
+let found = null;
+for (let i = fromIdx + 1; i < toIdx; i++) {
+const left = candles[i - 1], right = candles[i + 1];
+if (left.high < right.low) found = { type: 'bullish', from: left.high, to: right.low };
+else if (left.low > right.high) found = { type: 'bearish', from: right.high, to: left.low };
+}
+return found;
+}
+
+function computeRSI(closes, period) {
+const rsi = new Array(closes.length).fill(null);
+if (closes.length <= period) return rsi;
+let gains = 0, losses = 0;
+for (let i = 1; i <= period; i++) { const diff = closes[i] - closes[i - 1]; if (diff >= 0) gains += diff; else losses -= diff; }
+let avgGain = gains / period, avgLoss = losses / period;
+rsi[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
+for (let i = period + 1; i < closes.length; i++) {
+const diff = closes[i] - closes[i - 1];
+const gain = diff > 0 ? diff : 0;
+const loss = diff < 0 ? -diff : 0;
+avgGain = (avgGain * (period - 1) + gain) / period;
+avgLoss = (avgLoss * (period - 1) + loss) / period;
+rsi[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
+}
+return rsi;
+}
+
+function renderRSIDivergence(candles, p2, p4) {
+const el = document.getElementById('rsiDivergenceNote');
+const closes = candles.map(c => c.close);
+const rsi = computeRSI(closes, 14);
+if (p2.type !== p4.type || rsi[p2.idx] === null || rsi[p4.idx] === null) { el.className = 'rsi-note'; el.textContent = 'دايفرجنس RSI: البيانات غير كافية.'; return; }
+const rsiP2 = rsi[p2.idx], rsiP4 = rsi[p4.idx];
+if (p4.type === 'high') {
+if (p4.price > p2.price && rsiP4 < rsiP2) { el.className = 'rsi-note bear'; el.textContent = '⚠️ دايفرجنس هابط: السعر عمل قمة أعلى، لكن RSI عمل قمة أوطأ (' + rsiP2.toFixed(1) + ' → ' + rsiP4.toFixed(1) + ').'; }
+else { el.className = 'rsi-note'; el.textContent = 'لا يوجد دايفرجنس واضح. RSI عند آخر قمة: ' + rsiP4.toFixed(1); }
+} else {
+if (p4.price < p2.price && rsiP4 > rsiP2) { el.className = 'rsi-note bull'; el.textContent = '⚠️ دايفرجنس صاعد: السعر عمل قاع أدنى، لكن RSI عمل قاع أعلى (' + rsiP2.toFixed(1) + ' → ' + rsiP4.toFixed(1) + ').'; }
+else { el.className = 'rsi-note'; el.textContent = 'لا يوجد دايفرجنس واضح. RSI عند آخر قاع: ' + rsiP4.toFixed(1); }
+}
+}
+
+function calculateFlow() {
+const statusEl = document.getElementById('flowStatus');
+const panel = document.getElementById('flowPanel');
+if (!flowCandlesCache) { statusEl.textContent = 'اجلب الشموع أولاً.'; panel.style.display = 'none'; return; }
+const pivots = zigZagPivots(flowCandlesCache, flowMetaCache.deviation);
+if (pivots.length < 4) { statusEl.textContent = 'لا توجد بيانات هيكلية كافية.'; panel.style.display = 'none'; return; }
+panel.style.display = 'block';
+const [p1, p2, p3, p4] = pivots.slice(-4);
+let direction, tagClass, structureLabel;
+if (p1.type === 'low') {
+const lowsRising = p3.price > p1.price;
+const highsRising = p4.price > p2.price;
+if (highsRising && lowsRising) { direction = 'bullish'; tagClass = 'bos'; structureLabel = 'BOS صاعد — استمرار الاتجاه'; }
+else if (!highsRising && lowsRising) { direction = 'bearish'; tagClass = 'choch'; structureLabel = 'CHoCH هابط — تغيّر محتمل'; }
+else if (highsRising && !lowsRising) { direction = 'bullish'; tagClass = 'choch'; structureLabel = 'CHoCH صاعد — تغيّر محتمل'; }
+else { direction = 'bearish'; tagClass = 'bos'; structureLabel = 'BOS هابط — استمرار الاتجاه'; }
+} else {
+const highsFalling = p3.price < p1.price;
+const lowsFalling = p4.price < p2.price;
+if (highsFalling && lowsFalling) { direction = 'bearish'; tagClass = 'bos'; structureLabel = 'BOS هابط — استمرار الاتجاه'; }
+else if (!highsFalling && lowsFalling) { direction = 'bullish'; tagClass = 'choch'; structureLabel = 'CHoCH صاعد — تغيّر محتمل'; }
+else if (highsFalling && !lowsFalling) { direction = 'bearish'; tagClass = 'choch'; structureLabel = 'CHoCH هابط — تغيّر محتمل'; }
+else { direction = 'bullish'; tagClass = 'bos'; structureLabel = 'BOS صاعد — استمرار الاتجاه'; }
+}
+const breakLevel = p2.price;
+const isBullishBreak = direction === 'bullish';
+const breakIdx = findBreakIndex(flowCandlesCache, p3.idx, p4.idx, breakLevel, isBullishBreak);
+const ob = findOrderBlock(flowCandlesCache, p3.idx, breakIdx, isBullishBreak);
+const fvg = findLastFVG(flowCandlesCache, p3.idx, p4.idx);
+document.getElementById('flowP1').textContent = p1.price.toFixed(2) + ' (' + (p1.type === 'high' ? 'قمة' : 'قاع') + ')';
+document.getElementById('flowP2').textContent = p2.price.toFixed(2) + ' (' + (p2.type === 'high' ? 'قمة' : 'قاع') + ')';
+document.getElementById('flowP3').textContent = p3.price.toFixed(2) + ' (' + (p3.type === 'high' ? 'قمة' : 'قاع') + ')';
+document.getElementById('flowP4').textContent = p4.price.toFixed(2) + ' (' + (p4.type === 'high' ? 'قمة' : 'قاع') + ')';
+document.getElementById('flowOBFrom').textContent = ob.low.toFixed(2);
+document.getElementById('flowOBTo').textContent = ob.high.toFixed(2);
+if (fvg) { document.getElementById('flowFVGType').textContent = fvg.type === 'bullish' ? 'صاعدة' : 'هابطة'; document.getElementById('flowFVGFrom').textContent = fvg.from.toFixed(2); document.getElementById('flowFVGTo').textContent = fvg.to.toFixed(2); }
+else { document.getElementById('flowFVGType').textContent = 'لا توجد'; document.getElementById('flowFVGFrom').textContent = '—'; document.getElementById('flowFVGTo').textContent = '—'; }
+const tagLabel = tagClass === 'bos' ? 'BOS' : (tagClass === 'choch' ? 'CHoCH' : 'RANGE');
+document.getElementById('flowStructureTag').innerHTML = '<span class="flow-tag ' + tagClass + '">' + tagLabel + '</span><span style="font-size:13px; color:var(--text-main); font-weight:700;">' + structureLabel + '</span>';
+const badge = document.getElementById('flowBadge');
+badge.style.display = 'flex';
+if (direction === 'bullish') { badge.className = 'trade-badge buy'; badge.innerHTML = '<span>شراء — ' + (tagClass === 'bos' ? 'استمرار الاتجاه الصاعد' : 'انعكاس محتمل للصعود') + '</span><span class="tb-note">أوردر بلوك: ' + ob.low.toFixed(2) + ' – ' + ob.high.toFixed(2) + '</span>'; }
+else { badge.className = 'trade-badge sell'; badge.innerHTML = '<span>بيع — ' + (tagClass === 'bos' ? 'استمرار الاتجاه الهابط' : 'انعكاس محتمل للهبوط') + '</span><span class="tb-note">أوردر بلوك: ' + ob.low.toFixed(2) + ' – ' + ob.high.toFixed(2) + '</span>'; }
+statusEl.textContent = flowMetaCache.symbol + ' (' + flowMetaCache.timeframeLabel + ') — تم تحليل ' + flowCandlesCache.length + ' شمعة.';
+renderConfirmNote('confirmFlow', flowCandlesCache, ob.low, ob.high);
+checkMTFAlignment('tfFlow', direction, 'mtfFlow');
+roomLevels.flow = { obLow: ob.low, obHigh: ob.high, direction: (direction === 'bullish' ? 'buy' : 'sell') };
+renderConfluence();
+renderRSIDivergence(flowCandlesCache, p2, p4);
+saveHistoryEntry({ time: new Date().toISOString(), room: 'flow', symbol: flowMetaCache.symbol, label: structureLabel, resultText: 'OB: ' + ob.low.toFixed(2) + '–' + ob.high.toFixed(2) });
+}
+
+function saveHistoryEntry(entry) {
+let history = [];
+try { history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch (e) { history = []; }
+history.unshift(entry);
+if (history.length > HISTORY_MAX) history = history.slice(0, HISTORY_MAX);
+localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+renderHistory();
+}
+
+function renderHistory() {
+let history = [];
+try { history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch (e) { history = []; }
+const list = document.getElementById('historyList');
+if (!history.length) { list.innerHTML = '<div class="history-empty">لا يوجد حسابات سابقة بعد.</div>'; return; }
+list.innerHTML = '';
+history.forEach((entry, idx) => {
+const d = new Date(entry.time);
+const dateStr = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+const roomTag = ROOM_TAGS[entry.room] || entry.room;
+const item = document.createElement('div');
+item.className = 'history-item';
+item.innerHTML = '<span class="h-main">[' + roomTag + '] ' + entry.symbol + ' · ' + entry.label + '</span><span class="h-sub">' + (entry.resultText || '') + ' · ' + dateStr + '</span>';
+item.onclick = () => switchTab(entry.room === 'hold' ? 'hold' : entry.room);
+list.appendChild(item);
+});
+}
+
+function clearHistory() { localStorage.removeItem(HISTORY_KEY); renderHistory(); }
+
+function isSessionActive(session, utcHour) {
+if (session.start < session.end) return utcHour >= session.start && utcHour < session.end;
+return utcHour >= session.start || utcHour < session.end;
+}
+
+function updateSessionIndicator() {
+const now = new Date();
+const utcHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+const activeSessions = SESSIONS.filter(s => isSessionActive(s, utcHour));
+const isOverlap = activeSessions.length >= 2;
+const tagsEl = document.getElementById('sessionTags');
+tagsEl.innerHTML = '';
+SESSIONS.forEach(s => {
+const active = isSessionActive(s, utcHour);
+const span = document.createElement('span');
+span.className = 'session-tag' + (active ? (isOverlap ? ' overlap' : ' active') : '');
+span.textContent = s.name;
+tagsEl.appendChild(span);
+});
+const hh = String(now.getUTCHours()).padStart(2, '0');
+const mm = String(now.getUTCMinutes()).padStart(2, '0');
+const timeStr = hh + ':' + mm + ' UTC';
+const statusEl = document.getElementById('sessionStatus');
+if (activeSessions.length === 0) statusEl.textContent = 'لا توجد جلسة رئيسية نشطة الآن (' + timeStr + ') — سيولة منخفضة.';
+else if (isOverlap) statusEl.textContent = 'تداخل جلسات (' + activeSessions.map(s => s.name).join(' + ') + ') — أعلى فرصة سيولة وحركة الآن (' + timeStr + ').';
+else statusEl.textContent = 'جلسة ' + activeSessions.map(s => s.name).join('، ') + ' نشطة الآن (' + timeStr + ').';
+}
+
+async function fetchVolatilityForecast() {
+const symbol = document.getElementById('symbolInput').value.trim();
+const apiKey = document.getElementById('apiKeyInput').value.trim();
+const statusEl = document.getElementById('volForecastStatus');
+const btn = document.getElementById('volForecastBtn');
+if (!symbol || !apiKey) { statusEl.textContent = 'أدخل الرمز ومفتاح API أولاً.'; return; }
+btn.disabled = true;
+statusEl.textContent = 'جاري جلب بيانات الأسبوع الماضي...';
+try {
+const url = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) + '&interval=1h&outputsize=168&timezone=UTC&apikey=' + encodeURIComponent(apiKey);
+const res = await fetch(url);
+const data = await res.json();
+if (data.status === 'error' || data.code) { statusEl.textContent = 'خطأ: ' + (data.message || 'تعذر جلب البيانات.'); return; }
+const raw = data.values;
+if (!raw || raw.length < 24) { statusEl.textContent = 'بيانات غير كافية.'; return; }
+const hourRanges = {};
+raw.forEach(c => {
+const hourStr = c.datetime.split(' ')[1];
+if (!hourStr) return;
+const hour = parseInt(hourStr.split(':')[0], 10);
+const range = parseFloat(c.high) - parseFloat(c.low);
+if (!hourRanges[hour]) hourRanges[hour] = { sum: 0, count: 0 };
+hourRanges[hour].sum += range;
+hourRanges[hour].count += 1;
+});
+const currentHour = new Date().getUTCHours();
+const forecastHours = [0, 1, 2, 3].map(offset => (currentHour + offset) % 24);
+const lines = forecastHours.map(h => {
+const stat = hourRanges[h];
+const avg = stat ? (stat.sum / stat.count) : null;
+const label = String(h).padStart(2, '0') + ':00 UTC';
+return label + ' → ' + (avg !== null ? ('متوسط حركة ~' + avg.toFixed(2)) : 'لا توجد بيانات كافية');
+});
+statusEl.innerHTML = symbol + ' — توقع الحركة:<br>' + lines.join('<br>');
+} catch (err) { statusEl.textContent = 'خطأ في الشبكة.'; } finally { btn.disabled = false; }
+}
+
+function getAllLevels() {
+const levels = [];
+if (roomLevels.gann) { const r = roomLevels.gann; levels.push({ price: r.targetPrice, source: 'WOLF · هدف' }); levels.push({ price: r.corrUp, source: 'WOLF · تصحيح فوق' }); levels.push({ price: r.corrDown, source: 'WOLF · تصحيح تحت' }); levels.push({ price: r.extUp, source: 'WOLF · امتداد صاعد' }); levels.push({ price: r.extDown, source: 'WOLF · امتداد هابط' }); }
+if (roomLevels.sk) { const r = roomLevels.sk; levels.push({ price: r.entry, source: 'WOLF RUN · دخول B' }); levels.push({ price: r.target, source: 'WOLF RUN · هدف C' }); levels.push({ price: (r.bcFrom + r.bcTo) / 2, source: 'WOLF RUN · منتصف BC' }); }
+if (roomLevels.hold) { const r = roomLevels.hold; levels.push({ price: r.pp, source: 'WOLF HOLD · PP' }); levels.push({ price: r.r1, source: 'WOLF HOLD · R1' }); levels.push({ price: r.s1, source: 'WOLF HOLD · S1' }); levels.push({ price: r.camR1, source: 'WOLF HOLD · كام R1' }); levels.push({ price: r.camS1, source: 'WOLF HOLD · كام S1' }); }
+if (roomLevels.flow) { const r = roomLevels.flow; levels.push({ price: (r.obLow + r.obHigh) / 2, source: 'WOLF FLOW · أوردر بلوك' }); }
+if (roomLevels.harmonic) { levels.push({ price: roomLevels.harmonic.d, source: 'WOLF HARMONIC · نقطة D' }); }
+return levels;
+}
+
+function clusterLevels(levels, thresholdPct) {
+const sorted = levels.slice().sort((a, b) => a.price - b.price);
+const clusters = [];
+let current = null;
+sorted.forEach(lvl => {
+if (!current) { current = { items: [lvl], min: lvl.price, max: lvl.price }; return; }
+const mid = (current.min + current.max) / 2;
+const pctDiff = Math.abs(lvl.price - mid) / mid * 100;
+if (pctDiff <= thresholdPct) { current.items.push(lvl); current.min = Math.min(current.min, lvl.price); current.max = Math.max(current.max, lvl.price); }
+else { clusters.push(current); current = { items: [lvl], min: lvl.price, max: lvl.price }; }
+});
+if (current) clusters.push(current);
+return clusters.filter(c => c.items.length >= 2);
+}
+
+function renderConfluence() {
+const levels = getAllLevels();
+const listEl = document.getElementById('confluenceList');
+if (levels.length < 2) { listEl.innerHTML = '<div class="history-empty">احسب في غرفتين على الأقل الأول.</div>'; drawHeatmap([]); return; }
+const clusters = clusterLevels(levels, 0.15).sort((a, b) => b.items.length - a.items.length);
+if (!clusters.length) { listEl.innerHTML = '<div class="history-empty">مفيش تقاطع واضح بين المستويات الحالية.</div>'; }
+else {
+listEl.innerHTML = '';
+clusters.forEach(c => {
+const avg = c.items.reduce((s, i) => s + i.price, 0) / c.items.length;
+const div = document.createElement('div');
+div.className = 'history-item';
+div.style.cursor = 'default';
+div.innerHTML = '<span class="h-main">' + avg.toFixed(2) + ' (' + c.items.length + ' مصادر)</span><span class="h-sub">' + c.items.map(i => i.source).join(' · ') + '</span>';
+listEl.appendChild(div);
+});
+}
+drawHeatmap(levels);
+buildAutoTradeBrief();
+}
+
+function getAllDirections() {
+const directions = [];
+['gann', 'sk', 'hold', 'flow', 'harmonic'].forEach(room => {
+if (roomLevels[room] && roomLevels[room].direction) directions.push({ room: room, direction: roomLevels[room].direction });
+});
+return directions;
+}
+
+function drawHeatmap(levels) {
+const canvas = document.getElementById('heatmapCanvas');
+const ctx = canvas.getContext('2d');
+const w = canvas.width, h = canvas.height;
+ctx.clearRect(0, 0, w, h);
+if (!levels.length) return;
+const prices = levels.map(l => l.price);
+const minP = Math.min(...prices), maxP = Math.max(...prices);
+const pad = (maxP - minP) * 0.15 || 1;
+const top = maxP + pad, bottom = minP - pad;
+const marginY = 20;
+const buckets = 40;
+const counts = new Array(buckets).fill(0);
+levels.forEach(l => { const idx = Math.min(buckets - 1, Math.max(0, Math.floor((top - l.price) / (top - bottom) * buckets))); counts[idx]++; });
+const maxCount = Math.max(...counts, 1);
+const bucketHeight = (h - marginY * 2) / buckets;
+for (let i = 0; i < buckets; i++) {
+const intensity = counts[i] / maxCount;
+if (intensity <= 0) continue;
+ctx.fillStyle = 'rgba(255,75,92,' + (0.12 + intensity * 0.68).toFixed(2) + ')';
+ctx.fillRect(50, marginY + i * bucketHeight, w - 100, bucketHeight);
+}
+ctx.fillStyle = '#dfeaf5';
+ctx.font = '600 13px monospace';
+ctx.textAlign = 'center'; ctx.direction = 'ltr';
+ctx.fillText(top.toFixed(2), w / 2, 14);
+ctx.fillText(bottom.toFixed(2), w / 2, h - 6);
+}
+
+function buildAutoTradeBrief() {
+const briefEl = document.getElementById('autoTradeBrief');
+const directions = getAllDirections();
+if (directions.length < AUTO_BRIEF_MIN_ROOMS) { briefEl.innerHTML = '<div class="history-empty">احسب في ' + AUTO_BRIEF_MIN_ROOMS + ' غرف على الأقل.</div>'; return; }
+const buyCount = directions.filter(d => d.direction === 'buy').length;
+const sellCount = directions.filter(d => d.direction === 'sell').length;
+if (buyCount < AUTO_BRIEF_MIN_ROOMS && sellCount < AUTO_BRIEF_MIN_ROOMS) { briefEl.innerHTML = '<div class="history-empty">الغرف مش متفقة بما يكفي (شراء: ' + buyCount + ' · بيع: ' + sellCount + ').</div>'; return; }
+const consensusDirection = buyCount >= AUTO_BRIEF_MIN_ROOMS ? 'buy' : 'sell';
+const agreeCount = Math.max(buyCount, sellCount);
+const agreeRooms = directions.filter(d => d.direction === consensusDirection).map(d => ROOM_TAGS[d.room] || d.room);
+const levels = getAllLevels();
+const clusters = clusterLevels(levels, CONFLUENCE_CLUSTER_PCT).sort((a, b) => b.items.length - a.items.length);
+if (!clusters.length) { briefEl.innerHTML = '<div class="history-empty">فيه اتفاق في الاتجاه (' + agreeRooms.join(' + ') + ') لكن لسه مفيش تقاطع سعري واضح.</div>'; return; }
+const mainCluster = clusters[0];
+const entry = mainCluster.items.reduce((s, i) => s + i.price, 0) / mainCluster.items.length;
+let target = null;
+for (let i = 1; i < clusters.length; i++) {
+const c = clusters[i];
+const avg = c.items.reduce((s, it) => s + it.price, 0) / c.items.length;
+if (consensusDirection === 'buy' && avg > entry) { target = avg; break; }
+if (consensusDirection === 'sell' && avg < entry) { target = avg; break; }
+}
+const margin = entry * 0.0025;
+const stop = consensusDirection === 'buy' ? entry - margin * 3 : entry + margin * 3;
+if (target === null) { const riskFallback = Math.abs(entry - stop); target = consensusDirection === 'buy' ? entry + riskFallback * 2 : entry - riskFallback * 2; }
+const risk = Math.abs(entry - stop);
+const reward = Math.abs(target - entry);
+const rr = risk > 0 ? (reward / risk) : 0;
+briefEl.innerHTML = '<div class="trade-badge ' + consensusDirection + '" style="margin-bottom:14px;"><span>' + (consensusDirection === 'buy' ? 'شراء' : 'بيع') + ' — اتفاق ' + agreeCount + ' من ' + directions.length + ' غرف</span><span class="tb-note">' + agreeRooms.join(' + ') + '</span></div><div class="result-row"><span class="result-label">الدخول</span><span class="result-value">' + entry.toFixed(2) + '</span></div><div class="result-row"><span class="result-label">وقف الخسارة</span><span class="result-value">' + stop.toFixed(2) + '</span></div><div class="result-row"><span class="result-label">الهدف</span><span class="result-value">' + target.toFixed(2) + '</span></div><div class="result-row"><span class="result-label">نسبة العائد للمخاطرة</span><span class="result-value">1 : ' + rr.toFixed(2) + '</span></div>';
+checkAlertDigest(consensusDirection, entry, agreeCount, agreeRooms);
+}
+
+function checkAlertDigest(direction, entry, agreeCount, agreeRooms) {
+const signature = direction + '|' + entry.toFixed(1) + '|' + agreeCount;
+const statusEl = document.getElementById('alertDigestStatus');
+if (signature === lastDigestSignature) return;
+lastDigestSignature = signature;
+const message = 'اتفاق ' + agreeCount + ' غرف (' + agreeRooms.join(' + ') + ') على ' + (direction === 'buy' ? 'شراء' : 'بيع') + ' حول ' + entry.toFixed(2);
+statusEl.textContent = '🔔 ' + message;
+if ('Notification' in window) {
+if (Notification.permission === 'default') Notification.requestPermission();
+if (Notification.permission === 'granted') new Notification('بلاك وولف · تنبيه مجمّع', { body: message });
+}
+}
+
+async function fetchHarmonic() {
+const data = await fetchTimeSeries('tfHarmonic', 'feedStatusHarmonic', 'fetchBtnHarmonic');
+if (!data) return;
+harmonicCandlesCache = data.chronological;
+const statusEl = document.getElementById('feedStatusHarmonic');
+statusEl.textContent = data.symbol + ' (' + data.timeframeLabel + ') — تم جلب ' + data.chronological.length + ' شمعة، جاري فحص النماذج...';
+statusEl.classList.add('ok');
+calculateHarmonic(data.deviation);
+}
+
+function calculateHarmonic(deviation) {
+const panel = document.getElementById('harmonicPanel');
+const statusEl = document.getElementById('harmonicStatus');
+if (!harmonicCandlesCache) { panel.style.display = 'none'; return; }
+const pivots = zigZagPivots(harmonicCandlesCache, deviation);
+if (pivots.length < 5) { panel.style.display = 'none'; document.getElementById('feedStatusHarmonic').textContent = 'لا توجد 5 نقاط تحول كافية.'; return; }
+panel.style.display = 'block';
+const [X, A, B, C, D] = pivots.slice(-5);
+const XA = Math.abs(A.price - X.price);
+const AB = Math.abs(B.price - A.price);
+const BC = Math.abs(C.price - B.price);
+const CD = Math.abs(D.price - C.price);
+const AD = Math.abs(A.price - D.price);
+const ab_xa = AB / XA, bc_ab = BC / AB, cd_bc = CD / BC, ad_xa = AD / XA;
+let matched = null;
+HARMONIC_PATTERNS.forEach(p => {
+const inRange = (v, r) => v >= r[0] && v <= r[1];
+if (inRange(ab_xa, p.ab_xa) && inRange(bc_ab, p.bc_ab) && inRange(cd_bc, p.cd_bc) && inRange(ad_xa, p.ad_xa)) matched = p.name;
+});
+const isBullish = X.type === 'low';
+document.getElementById('harX').textContent = X.price.toFixed(2);
+document.getElementById('harA').textContent = A.price.toFixed(2);
+document.getElementById('harB').textContent = B.price.toFixed(2);
+document.getElementById('harC').textContent = C.price.toFixed(2);
+document.getElementById('harD').textContent = D.price.toFixed(2);
+document.getElementById('harRatioAB').textContent = ab_xa.toFixed(3);
+document.getElementById('harRatioBC').textContent = bc_ab.toFixed(3);
+document.getElementById('harRatioCD').textContent = cd_bc.toFixed(3);
+document.getElementById('harRatioAD').textContent = ad_xa.toFixed(3);
+const stopMargin = CD * 0.1;
+const stop = isBullish ? (D.price - stopMargin) : (D.price + stopMargin);
+const target = isBullish ? (D.price + CD * 0.382) : (D.price - CD * 0.382);
+document.getElementById('harEntry').textContent = D.price.toFixed(2);
+document.getElementById('harStop').textContent = stop.toFixed(2);
+document.getElementById('harTarget').textContent = target.toFixed(2);
+const badge = document.getElementById('harmonicBadge');
+badge.style.display = 'flex';
+const patternText = matched ? ('نموذج ' + matched + ' مكتمل') : 'لا يوجد نموذج مطابق دقيقًا حاليًا';
+if (isBullish) { badge.className = 'trade-badge buy'; badge.innerHTML = '<span>شراء — ' + patternText + ' عند D</span><span class="tb-note">هدف: ' + target.toFixed(2) + '</span>'; }
+else { badge.className = 'trade-badge sell'; badge.innerHTML = '<span>بيع — ' + patternText + ' عند D</span><span class="tb-note">هدف: ' + target.toFixed(2) + '</span>'; }
+statusEl.textContent = matched ? '✅ تم رصد نموذج ' + matched + ' ' + (isBullish ? 'صاعد' : 'هابط') + ' مكتمل عند نقطة D.' : 'النقاط الخمس موجودة لكن نسبها لا تطابق أي نموذج هارمونيك معروف بدقة كافية.';
+document.getElementById('feedStatusHarmonic').textContent = matched ? 'تم رصد نموذج ' + matched + ' — راجع التفاصيل تحت.' : 'تم الجلب والفحص، لا يوجد نموذج مطابق دقيقًا.';
+roomLevels.harmonic = { d: D.price, direction: (isBullish ? 'buy' : 'sell') };
+renderConfluence();
+saveHistoryEntry({ time: new Date().toISOString(), room: 'harmonic', symbol: document.getElementById('symbolInput').value.trim() || '—', label: matched || 'بلا تطابق', resultText: 'D: ' + D.price.toFixed(2) });
+}
+</script>
+</body>
+</html>
